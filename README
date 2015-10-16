@@ -1,0 +1,13 @@
+
+A Fast Fourier Transform implementation in Standard ML.
+
+No dependencies apart from the Basis library. Supports power-of-two
+sizes only.
+
+Written by Chris Cannam, cannam@all-day-breakfast.com.
+
+Modelled on the Nayuki project multi-language implementation
+(http://www.nayuki.io/page/free-small-fft-in-multiple-languages).
+
+Free BSD-style licence, see COPYING for details.
+
