@@ -6,16 +6,16 @@ signature FFT = sig
              
     val forward : t * real vector * real vector -> real vector * real vector
     val forward_real : t * real vector -> real vector * real vector
-    val forward_inplace : t * real Array.array * real Array.array -> unit
+    val forward_inplace : t * real array * real array -> unit
 
     val inverse : t * real vector * real vector -> real vector * real vector
     val inverse_real : t * real vector * real vector -> real vector
-    val inverse_inplace : t * real Array.array * real Array.array -> unit
+    val inverse_inplace : t * real array * real array -> unit
 end
 
 structure Fft : FFT = struct
 
-type t = { cos : real Array.array, sin : real Array.array, levels : int }
+type t = { cos : real array, sin : real array, levels : int }
 
 fun fft size =
     let
