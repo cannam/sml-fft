@@ -1,8 +1,8 @@
 
 A Fast Fourier Transform implementation in Standard ML.
 
-No dependencies apart from the Basis library. Supports power-of-two
-sizes only.
+Intended to be reasonably fast rather than beautiful. No dependencies
+apart from the Basis library. Supports power-of-two sizes only.
 
 Written by Chris Cannam, cannam@all-day-breakfast.com.
 
