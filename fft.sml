@@ -247,11 +247,15 @@ fun benchmark f =
 fun main () =
     let
         val () = test ()
-        val (time, result) = benchmark (fn _ => many_times 2048 2000)
+        val n = 2000
+        val size = 2048
+        val (time, result) = benchmark (fn _ => many_times size n)
+        val sec = Time.toReal time
     in 
         print ("result = " ^
                (Real.toString result) ^ " in " ^
-               (Real.toString (Time.toReal time)) ^ " sec\n")
+               (Real.toString sec) ^ " sec\n" ^
+               "that's " ^ (Real.toString (Real.fromInt n / sec)) ^ " per second\n")
     end
 
 val _ = main ();
