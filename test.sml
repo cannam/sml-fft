@@ -62,47 +62,61 @@ val testcases = [
 fun test () =
     app (fn testcase =>
             let
+		val name = #name testcase
                 val real_arr = Array.fromList (#1 (#input testcase))
                 val imag_arr = Array.fromList (#2 (#input testcase))
 		val real_vec = Array.vector real_arr
 		val imag_vec = Array.vector imag_arr
+
                 fun print_vec vec =
                     Vector.app (fn x => print (" " ^ (Real.toString x))) vec
-		and wrong a b = Real.abs (a - b) > 1e~12
-		and check_vec vec lst scale =
-                    Vector.appi
-                        (fn (i, x) =>
-                            if wrong x (Vector.sub (vec, i) / scale) then
-				(print_vec vec;
-				 print "\n";
-                                 raise Fail ("Failed: " ^ (#name testcase)))
-                            else ())
-                        (Vector.fromList lst)
+		and good a b = Real.abs (a - b) < 1e~12
+		and pass sort =
+		    print ("PASS: " ^ sort ^ " " ^ name ^ "\n")
+		and fail vec sort =
+		    (print ("FAIL: " ^ sort ^ " " ^ name ^ "\n");
+		     print_vec vec;
+		     print "\n";
+		     raise Fail ("Failed: " ^ name))
+		and check_vec vec lst scale sort =
+		    let val factor =
+			    if scale then 1.0 / Real.fromInt (Vector.length vec)
+			    else 1.0
+		    in
+			Vector.appi
+                            (fn (i, x) =>
+				if good x (Vector.sub (vec, i) * factor) then ()
+				else fail vec sort) 
+                            (Vector.fromList lst)
+		    end
 		and check (real, imag) selector scale sort =
-		    (check_vec real (#1 (selector testcase)) scale;
-		     check_vec imag (#2 (selector testcase)) scale;
-		     print ("PASS: " ^ sort ^ " " ^ (#name testcase) ^ "\n"))
+		    (check_vec real (#1 (selector testcase)) scale sort;
+		     check_vec imag (#2 (selector testcase)) scale sort;
+		     pass sort)
 		and check_arrs (real, imag) =
 		    check (Array.vector real, Array.vector imag)
-                val n = Array.length real_arr
-		val n' = Real.fromInt n
-                val f = Fft.fft n
+			  
+                val f = Fft.fft (Vector.length real_vec)
 		val f_out as (f_re, f_im) = Fft.forward (f, real_vec, imag_vec)
 		val i_out as (i_re, i_im) = Fft.inverse (f, f_re, f_im)
 		val fr_out as (fr_re, fr_im) = Fft.forward_real (f, real_vec)
 		val ir_re = Fft.inverse_real (f, fr_re, fr_im)
             in
-		check f_out #output 1.0 "forward";
-		check i_out #input n' "inverse";
+		check f_out #output false "forward";
+		check i_out #input true "inverse";
+
 		if #real testcase then
-		    (check fr_out #output 1.0 "forward_real";
-		     check_vec ir_re (#1 (#input testcase)) n';
-		     print ("PASS: inverse_real " ^ (#name testcase) ^ "\n"))
+		    (check fr_out #output false "forward_real";
+		     check_vec ir_re (#1 (#input testcase)) true;
+		     pass "inverse_real")
 		else ();
+
                 Fft.forward_inplace (f, real_arr, imag_arr);
-		check_arrs (real_arr, imag_arr) #output 1.0 "forward_inplace";
+		check_arrs (real_arr, imag_arr) #output false "forward_inplace";
+
                 Fft.inverse_inplace (f, real_arr, imag_arr);
-		check_arrs (real_arr, imag_arr) #input n' "inverse_inplace"
+		check_arrs (real_arr, imag_arr) #input true "inverse_inplace"
+
             end)
         testcases
 
