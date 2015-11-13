@@ -1,36 +1,80 @@
 
 structure Fft : FFT = struct
 
-type t = { cos : real array, sin : real array, levels : int }
+type fft_rec = {
+    cos : real array,
+    sin : real array,
+    levels : int
+}
+
+type real_fft_rec = {
+    sub : fft_rec,
+    cos : real array,
+    sin : real array
+}
+                   
+type t = {
+    complex : fft_rec,
+    real : real_fft_rec
+}
+
+fun power_of_two 1 = 0
+  | power_of_two n =
+    if n <= 0 then raise Fail "invalid argument"
+    else if Int.mod (n, 2) = 1 then raise Fail "power-of-two sizes only please"
+    else 1 + power_of_two (Int.quot (n, 2))
 
 fun fft size =
     let
         open Array
-        val factor = 2.0 * Math.pi / Real.fromInt(size)
-        val cos = tabulate (size, fn i => Math.cos (factor * Real.fromInt(i)))
-        val sin = tabulate (size, fn i => Math.sin (factor * Real.fromInt(i)))
-        val levels =
-            let val log = Math.log10 (Real.fromInt size) / Math.log10 2.0 in
-                if Real.round (Math.pow(2.0, log)) <> size then
-                    raise Fail "power-of-two sizes only please"
-                else
-                    Real.round log
+                              
+        fun fft_complex size =
+            let
+                (* factors for complex-complex transforms: *)
+                val phase = fn i => 2.0 * Math.pi *
+                                    Real.fromInt(i) / Real.fromInt(size)
+                val cos = tabulate (size, Math.cos o phase)
+                val sin = tabulate (size, Math.sin o phase)
+                val levels = power_of_two size
+            in
+                {
+                  cos = cos,
+                  sin = sin,
+                  levels = levels
+                }
             end
+
+        val main = fft_complex size    
+        val real_substate = fft_complex (Int.div (size, 2))
+                
+        (* additional factors for real-complex transforms: *)
+        val phase_r = fn i => ~Math.pi * (Real.fromInt (i+1) /
+                                          Real.fromInt size + 0.5)
+        val cos_r = tabulate (size, Math.cos o phase_r)
+        val sin_r = tabulate (size, Math.sin o phase_r)
     in
-        { cos = cos, sin = sin, levels = levels }
+        {
+          complex = main,
+          real = {
+              sub = real_substate,
+              cos = cos_r,
+              sin = sin_r
+          }
+        }
+    end
+                 
+fun for count f =
+    let val n = ref 0 in
+        while !n < count do (f (!n); n := !n + 1)
     end
 
-fun forward_inplace (t : t, real, imag) =
+fun do_forward_inplace (frec : fft_rec, real, imag) =
+
     let
         open Array
 
-        val size = length (#cos t)
-        val levels = #levels t
-                 
-        fun for count f =
-            let val n = ref 0 in
-                while !n < count do (f (!n); n := !n + 1)
-            end
+        val size = length (#cos frec)
+        val levels = #levels frec
 
         fun reverse_bits (x, bits) =
             let open Word
@@ -72,8 +116,8 @@ fun forward_inplace (t : t, real, imag) =
                                 let val i = i' * scale
                                     val j = h + i
                                     val k = j + half
-                                    val c = sub (#cos t, h * step)
-                                    val s = sub (#sin t, h * step)
+                                    val c = sub (#cos frec, h * step)
+                                    val s = sub (#sin frec, h * step)
                                     val re = sub (real, k) * c + sub (imag, k) * s;
                                     val im = sub (imag, k) * c - sub (real, k) * s;
                                 in
@@ -90,8 +134,11 @@ fun forward_inplace (t : t, real, imag) =
         for levels (fn _ => (do_scale (!scale); scale := !scale * 2))
     end
 
-fun inverse_inplace (t, real, imag) =
-    forward_inplace (t, imag, real)
+fun forward_inplace (t : t, real, imag) =
+    do_forward_inplace (#complex t, real, imag)
+        
+fun inverse_inplace (t : t, real, imag) =
+    do_forward_inplace (#complex t, imag, real)
 
 fun forward (t, real, imag) =
     let open Array
@@ -104,7 +151,47 @@ fun forward (t, real, imag) =
         (vector re_a, vector im_a)
     end
 
-fun forward_real (t, real) =
+fun forward_real (t : t, real) =
+    let
+        open Array
+        val sz = Vector.length real
+        val hs = Int.quot (sz, 2)
+        val hhs = Int.quot (hs, 2)
+        val re_a = tabulate (hs, (fn i => Vector.sub (real, i * 2)))
+        val im_a = tabulate (hs, (fn i => Vector.sub (real, i * 2 + 1)))
+        val re_out = array (Vector.length real, 0.0)
+        val im_out = array (Vector.length real, 0.0)
+        val real_rec = #real t
+    in
+        do_forward_inplace (#sub real_rec, re_a, im_a);
+        update (re_out, 0, sub (re_a, 0) + sub (im_a, 0));
+        update (re_out, hs, sub (re_a, 0) - sub (im_a, 0));
+        for hhs
+            (fn i =>
+                let (* simplify? *)
+                    val k = i + 1
+                    val re_1 = sub (re_a, k) + sub (re_a, hs - k)
+                    val im_1 = sub (im_a, k) - sub (im_a, hs - k)
+                    val re_2 = sub (re_a, k) - sub (re_a, hs - k)
+                    val im_2 = sub (im_a, k) + sub (im_a, hs - k)
+                    val c = sub (#cos real_rec, i)
+                    val s = sub (#sin real_rec, i)
+                    val tw_r = re_2 * c - im_2 * s
+                    val tw_i = re_2 * s + im_2 * c
+                in
+                    update (re_out, k, (re_1 + tw_r) / 2.0);
+                    update (im_out, k, (im_1 + tw_i) / 2.0);
+                    update (re_out, hs - k, (re_1 - tw_r) / 2.0);
+                    update (im_out, hs - k, (tw_i - im_1) / 2.0)
+                end);
+        for hs
+            (fn i =>
+                (update (re_out, sz - i - 1, sub (re_out, i + 1));
+                 update (im_out, sz - i - 1, 0.0 - sub (im_out, i + 1))));
+        (vector re_out, vector im_out)
+    end
+        
+(*
     let open Array
         val re_a = array (Vector.length real, 0.0)
         val im_a = array (Vector.length real, 0.0)
@@ -113,7 +200,8 @@ fun forward_real (t, real) =
         forward_inplace (t, re_a, im_a);
         (vector re_a, vector im_a)
     end
-
+*)
+    
 fun inverse (t, real, imag) =
     let open Array
         val re_a = array (Vector.length real, 0.0)
