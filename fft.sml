@@ -1,5 +1,5 @@
 
-structure Fft : FFT = struct
+structure Fft :> FFT = struct
 
 type fft_rec = {
     cos : real array,
@@ -44,14 +44,16 @@ fun fft size =
                 }
             end
 
-        val main = fft_complex size    
-        val real_substate = fft_complex (Int.div (size, 2))
+        val main = fft_complex size
+
+        val hs = Int.div (size, 2)
+        val real_substate = fft_complex hs
                 
         (* additional factors for real-complex transforms: *)
         val phase_r = fn i => ~Math.pi * (Real.fromInt (i+1) /
-                                          Real.fromInt size + 0.5)
-        val cos_r = tabulate (size, Math.cos o phase_r)
-        val sin_r = tabulate (size, Math.sin o phase_r)
+                                          Real.fromInt hs + 0.5)
+        val cos_r = tabulate (hs, Math.cos o phase_r)
+        val sin_r = tabulate (hs, Math.sin o phase_r)
     in
         {
           complex = main,
@@ -190,17 +192,6 @@ fun forward_real (t : t, real) =
                  update (im_out, sz - i - 1, 0.0 - sub (im_out, i + 1))));
         (vector re_out, vector im_out)
     end
-        
-(*
-    let open Array
-        val re_a = array (Vector.length real, 0.0)
-        val im_a = array (Vector.length real, 0.0)
-    in
-        copyVec { src = real, dst = re_a, di = 0 };
-        forward_inplace (t, re_a, im_a);
-        (vector re_a, vector im_a)
-    end
-*)
     
 fun inverse (t, real, imag) =
     let open Array

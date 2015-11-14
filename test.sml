@@ -173,10 +173,27 @@ fun once n f =
               0.0
               (List.tabulate (n, fn x => x))
     end
+
+fun once_real n f =
+    let val input = Array.vector (make_input_reals n)
+        val (real, imag) = Fft.forward_real (f, input);
+    in
+        foldl (fn (i, acc) => acc + Math.sqrt (Vector.sub (real, i) *
+                                               Vector.sub (real, i) +
+                                               Vector.sub (imag, i) *
+                                               Vector.sub (imag, i)))
+              0.0
+              (List.tabulate (n, fn x => x))
+    end
         
 fun many_times n itr =
     let val f = Fft.fft n in
         List.foldl (op+) 0.0 (List.tabulate (itr, (fn _ => once n f)))
+    end
+        
+fun many_times_real n itr =
+    let val f = Fft.fft n in
+        List.foldl (op+) 0.0 (List.tabulate (itr, (fn _ => once_real n f)))
     end
 
 fun timed_call f =
@@ -186,24 +203,29 @@ fun timed_call f =
     in (Time.-(finish, start), result)
     end
 
-fun benchmark n =
+fun benchmark (n, r) =
     let
 	val itr = 2000
-        val (time, result) = timed_call (fn _ => many_times n itr)
+        val func = if r then many_times_real else many_times 
+        val (time, result) = timed_call (fn _ => func n itr)
 	val secs = Time.toReal time
     in 
         print ("result = " ^
                (Real.toString result) ^ " in " ^
                (Real.toString secs) ^ " sec (" ^
 	       (Int.toString (Real.round ((Real.fromInt itr) / secs))) ^ " x " ^
-	       (Int.toString n) ^ "-pt itr/sec)\n")
+	       (Int.toString n) ^ "-pt itr/sec) [" ^
+               (if r then "real" else "complex") ^ "]\n")
     end
         
 fun main () =
     let
         val () = test ()
     in
-	app benchmark [ 512, 1024, 2048, 8192 ]
+	app benchmark [ (512, false), (512, true),
+                        (1024, false), (1024, true),
+                        (2048, false), (2048, true),
+                        (8192, false), (8192, true) ]
     end
 
 val _ = main ();
