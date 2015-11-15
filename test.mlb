@@ -2,3 +2,4 @@ $(SML_LIB)/basis/basis.mlb
 fft.sig
 fft.sml
 test.sml
+main.sml

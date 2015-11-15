@@ -127,12 +127,13 @@ fun test () =
 		     pass sort)
 		and check_arrs (real, imag) =
 		    check (Array.vector real, Array.vector imag)
-			  
+
                 val f = Fft.fft (Vector.length real_vec)
+                val fr = FftReal.fft_real (Vector.length real_vec)
 		val f_out as (f_re, f_im) = Fft.forward (f, real_vec, imag_vec)
 		val i_out as (i_re, i_im) = Fft.inverse (f, f_re, f_im)
-		val fr_out as (fr_re, fr_im) = Fft.forward_real (f, real_vec)
-		val ir_re = Fft.inverse_real (f, fr_re, fr_im)
+		val fr_out as (fr_re, fr_im) = FftReal.forward (fr, real_vec)
+		val ir_re = FftReal.inverse (fr, fr_re, fr_im)
             in
 		check f_out #output false "forward";
 		check i_out #input true "inverse";
@@ -176,7 +177,7 @@ fun once n f =
 
 fun once_real n f =
     let val input = Array.vector (make_input_reals n)
-        val (real, imag) = Fft.forward_real (f, input);
+        val (real, imag) = FftReal.forward (f, input);
     in
         foldl (fn (i, acc) => acc + Math.sqrt (Vector.sub (real, i) *
                                                Vector.sub (real, i) +
@@ -192,7 +193,7 @@ fun many_times n itr =
     end
         
 fun many_times_real n itr =
-    let val f = Fft.fft n in
+    let val f = FftReal.fft_real n in
         List.foldl (op+) 0.0 (List.tabulate (itr, (fn _ => once_real n f)))
     end
 
@@ -227,6 +228,4 @@ fun main () =
                         (2048, false), (2048, true),
                         (8192, false), (8192, true) ]
     end
-
-val _ = main ();
 
