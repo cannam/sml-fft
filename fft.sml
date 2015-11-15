@@ -170,26 +170,26 @@ fun forward_real (t : t, real) =
         update (re_out, hs, sub (re_a, 0) - sub (im_a, 0));
         for hhs
             (fn i =>
-                let (* simplify? *)
-                    val k = i + 1
-                    val re_1 = sub (re_a, k) + sub (re_a, hs - k)
-                    val im_1 = sub (im_a, k) - sub (im_a, hs - k)
-                    val re_2 = sub (re_a, k) - sub (re_a, hs - k)
-                    val im_2 = sub (im_a, k) + sub (im_a, hs - k)
+                let
                     val c = sub (#cos real_rec, i)
                     val s = sub (#sin real_rec, i)
-                    val tw_r = re_2 * c - im_2 * s
-                    val tw_i = re_2 * s + im_2 * c
+                    val k = i + 1
+                    val r0 = sub (re_a, k)
+                    val r1 = sub (re_a, hs - k)
+                    val i0 = sub (im_a, k)
+                    val i1 = sub (im_a, hs - k)
+                    val tw_r = (r0 - r1) * c - (i0 + i1) * s
+                    val tw_i = (r0 - r1) * s + (i0 + i1) * c
                 in
-                    update (re_out, k, (re_1 + tw_r) / 2.0);
-                    update (im_out, k, (im_1 + tw_i) / 2.0);
-                    update (re_out, hs - k, (re_1 - tw_r) / 2.0);
-                    update (im_out, hs - k, (tw_i - im_1) / 2.0)
+                    update (re_out, k, (r0 + r1 + tw_r) / 2.0);
+                    update (re_out, hs - k, (r0 + r1 - tw_r) / 2.0);
+                    update (re_out, sz - k, sub (re_out, k));
+                    update (re_out, hs + k, sub (re_out, hs - k));
+                    update (im_out, k, (i0 - i1 + tw_i) / 2.0);
+                    update (im_out, hs - k, (tw_i - i0 + i1) / 2.0);
+                    update (im_out, sz - k, 0.0 - sub (im_out, k));
+                    update (im_out, hs + k, 0.0 - sub (im_out, hs - k))
                 end);
-        for hs
-            (fn i =>
-                (update (re_out, sz - i - 1, sub (re_out, i + 1));
-                 update (im_out, sz - i - 1, 0.0 - sub (im_out, i + 1))));
         (vector re_out, vector im_out)
     end
     
