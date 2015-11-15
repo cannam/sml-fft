@@ -186,6 +186,16 @@ fun once_real n f =
               0.0
               (List.tabulate (n, fn x => x))
     end
+
+fun once_real_inv n f =
+    let val real = Array.vector (make_input_reals n)
+        val imag = Array.vector (make_input_imags n)
+        val time = FftReal.inverse (f, real, imag)
+    in
+        foldl (fn (i, acc) => acc + abs (Vector.sub (time, i)))
+              0.0
+              (List.tabulate (n, fn x => x))
+    end
         
 fun many_times n itr =
     let val f = Fft.fft n in
@@ -196,6 +206,11 @@ fun many_times_real n itr =
     let val f = FftReal.fft_real n in
         List.foldl (op+) 0.0 (List.tabulate (itr, (fn _ => once_real n f)))
     end
+        
+fun many_times_real_inv n itr =
+    let val f = FftReal.fft_real n in
+        List.foldl (op+) 0.0 (List.tabulate (itr, (fn _ => once_real_inv n f)))
+    end
 
 fun timed_call f =
     let val start = Time.now ()
@@ -204,28 +219,27 @@ fun timed_call f =
     in (Time.-(finish, start), result)
     end
 
-fun benchmark (n, r) =
-    let
-	val itr = 2000
-        val func = if r then many_times_real else many_times 
-        val (time, result) = timed_call (fn _ => func n itr)
-	val secs = Time.toReal time
-    in 
-        print ("result = " ^
-               (Real.toString result) ^ " in " ^
-               (Real.toString secs) ^ " sec (" ^
-	       (Int.toString (Real.round ((Real.fromInt itr) / secs))) ^ " x " ^
-	       (Int.toString n) ^ "-pt itr/sec) [" ^
-               (if r then "real" else "complex") ^ "]\n")
-    end
+fun benchmark n =
+    app (fn (func, name) =>
+            let
+	        val itr = 2000
+                val (time, result) = timed_call (fn _ => func n itr)
+	        val secs = Time.toReal time
+            in 
+                print ("result = " ^
+                       (Real.toString result) ^ " in " ^
+                       (Real.toString secs) ^ " sec (" ^
+	               (Int.toString (Real.round ((Real.fromInt itr) / secs))) ^ " x " ^
+	               (Int.toString n) ^ "-pt itr/sec) [" ^ name ^ "]\n")
+            end)
+        [ (many_times, "complex"),
+          (many_times_real, "real"),
+          (many_times_real_inv, "real inverse") ]
         
 fun main () =
     let
         val () = test ()
     in
-	app benchmark [ (512, false), (512, true),
-                        (1024, false), (1024, true),
-                        (2048, false), (2048, true),
-                        (8192, false), (8192, true) ]
+	app benchmark [ 512, 1024, 2048, 8192 ]
     end
 

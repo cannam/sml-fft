@@ -1,6 +1,7 @@
 
-test:	test.mlb fft.sig fft.sml Makefile
-	../sml-buildscripts/polybuild test.mlb && mlton test.mlb
+test:	test.mlb fft.sig fft.sml test.sml Makefile
+	../sml-buildscripts/polybuild test.mlb
+	mlton test.mlb
 
 clean:
 	rm -f test
