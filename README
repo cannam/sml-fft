@@ -3,12 +3,16 @@ A Fast Fourier Transform implementation in Standard ML.
 
   https://bitbucket.org/cannam/sml-fft
 
-Intended to be reasonably fast rather than beautiful. No dependencies
-apart from the Basis library. Supports power-of-two sizes only.
+Intended to be reasonably fast rather than beautiful -- it's largely
+imperative using lots of mutable state.
 
-Chris Cannam, cannam@all-day-breakfast.com, modelled on the Nayuki
-multi-language implementation
-(http://www.nayuki.io/page/free-small-fft-in-multiple-languages).
+Includes complex-complex and real-complex FFTs. Supports power-of-two
+sizes only. No dependencies apart from the Basis library.
 
+The complex-complex FFT is modelled on Nayuki's multi-language version
+at http://www.nayuki.io/page/free-small-fft-in-multiple-languages.
+The real-complex wrapper is modelled on KissFFT by Mark Borgerding.
+
+Chris Cannam, cannam@all-day-breakfast.com.
 Free BSD-style licence, see COPYING for details.
 
