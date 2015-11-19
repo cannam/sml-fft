@@ -44,15 +44,13 @@ fun forward_inplace (t : t, real, imag) =
 		     
         fun reverse_bits (x, bits) =
             let open Word
+                val r = ref 0w0
                 val w = ref (fromInt x)
-                val r = ref (fromInt 0)
                 val b = ref (fromInt bits)
-                val one = fromInt 1
-                val zero = fromInt 0
             in
-                while !b > zero do (r := orb (<< (!r, one), andb (!w, one));
-                                    w := >> (!w, one);
-                                    b := !b - one);
+                while !b > 0w0 do (r := orb (<< (!r, 0w1), andb (!w, 0w1));
+                                   w := >> (!w, 0w1);
+                                   b := !b - 0w1);
                 toInt (!r)
             end
 
