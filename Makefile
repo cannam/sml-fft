@@ -5,7 +5,7 @@ test:	test.mlb fft.sig fft.sml test.sml Makefile
 	mlton test.mlb
 	./test
 
-timings:	timings.mlb fft.sig fft.sml test.sml Makefile
+timings:	timings.mlb fft.sig fft.sml timings.sml Makefile
 	mlton timings.mlb
 	./timings
 
