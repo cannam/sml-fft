@@ -106,6 +106,16 @@ fun forward (t : t, re_in) =
         (vector re_out, vector im_out)
     end
 
+fun forward_magnitude (t : t, re_in) =
+    let val (re, im) = forward (t, re_in)
+        open Vector
+        val sz = length re_in
+    in
+        tabulate (sz, fn i =>
+                         Math.sqrt (sub (re, i) * sub (re, i) +
+                                    sub (im, i) * sub (im, i)))
+    end
+
 fun inverse (t : t, re_in, im_in) =
     let
         open Array
@@ -140,13 +150,13 @@ fun inverse (t : t, re_in, im_in) =
                     update (im_a, hs - k, tw_i - i0 + i1)
                 end);
         Fft.inverse_inplace (#sub t, re_a, im_a);
-        Vector.tabulate (sz, (fn i =>
-                                 let val j = Int.quot (i, 2)
-                                     val k = Int.mod (i, 2)
-                                 in
-                                     if k = 0 then sub (re_a, j)
-                                     else sub (im_a, j)
-                                 end))
+        Vector.tabulate (sz, fn i =>
+                                let val j = Int.quot (i, 2)
+                                    val k = Int.mod (i, 2)
+                                in
+                                    if k = 0 then sub (re_a, j)
+                                    else sub (im_a, j)
+                                end)
     end        
 
 end

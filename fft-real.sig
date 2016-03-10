@@ -43,7 +43,12 @@ signature FFT_REAL = sig
        pair of separate (real, imaginary) vectors. Result vectors will
        have the same size as the input vector. *)
     val forward : t * real vector -> real vector * real vector
-								      
+		
+    (* Calculate a forward FFT of real input. Return the result as a
+       magnitude array (discarding phase). The result array will have
+       the same size as the input array. *)
+    val forward_magnitude : t * real vector -> real vector
+
     (* Calculate an inverse FFT of complex input, returning only the
        real part of the result and discarding the imaginary
        part. Result vector will have the same size as the input
