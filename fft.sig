@@ -37,7 +37,10 @@ signature FFT = sig
     type t
 
     (* Initialise an FFT of a given size (must be a power of two). *)
-    val fft : int -> t
+    val new : int -> t
+
+    (* Return the size of the given FFT *)
+    val size : t -> int
 
     (* Calculate a forward FFT of complex input, expressed as a pair
        of separate (real, imaginary) vectors. Return the result in the

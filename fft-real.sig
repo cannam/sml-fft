@@ -37,7 +37,10 @@ signature FFT_REAL = sig
 
     (* Initialise a real-complex FFT of a given size (must be a power
        of two, at least 2). *)
-    val fft_real : int -> t
+    val new : int -> t
+
+    (* Return the size of the given FFT *)
+    val size : t -> int
              
     (* Calculate a forward FFT of real input. Return the result as a
        pair of separate (real, imaginary) vectors. Result vectors will

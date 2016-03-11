@@ -52,7 +52,7 @@ fun power_of_two 1 = 0
     else if Int.mod (n, 2) = 1 then raise Fail "power-of-two sizes only please"
     else 1 + power_of_two (Int.quot (n, 2))
 
-fun fft size =
+fun new size =
     let
         val phase = fn i => 2.0 * Math.pi * Real.fromInt(i) / Real.fromInt(size)
         val cos = Vector.tabulate (size, Math.cos o phase)
@@ -60,6 +60,12 @@ fun fft size =
         val levels = power_of_two size
     in
         { cos = cos, sin = sin, levels = levels }
+    end
+
+fun size (fft : t) =
+    let fun size_for 0 = 1
+          | size_for lev = 2 * size_for (lev - 1)
+    in size_for (#levels fft)
     end
         
 fun forward_inplace (t : t, real, imag) =

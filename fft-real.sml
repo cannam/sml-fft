@@ -47,10 +47,10 @@ fun for count f =
         while !n < count do (f (!n); n := !n + 1)
     end
        
-fun fft_real size =              
+fun new size =              
     let
         val hs = Int.div (size, 2)
-        val real_substate = Fft.fft hs
+        val real_substate = Fft.new hs
                 
         (* additional factors for real-complex transforms: *)
         val phase = fn i => ~Math.pi * (Real.fromInt (i+1) /
@@ -65,6 +65,9 @@ fun fft_real size =
           cos_i = cos_i, sin_i = sin_i }
     end
 
+fun size (t : t) =
+    2 * Fft.size (#sub t)
+        
 fun forward (t : t, re_in) =
     let
         open Array

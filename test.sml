@@ -128,13 +128,21 @@ fun test () =
 		and check_arrs (real, imag) =
 		    check (Array.vector real, Array.vector imag)
 
-                val f = Fft.fft (Vector.length real_vec)
-                val fr = FftReal.fft_real (Vector.length real_vec)
+                val f = Fft.new (Vector.length real_vec)
+                val fr = FftReal.new (Vector.length real_vec)
 		val f_out as (f_re, f_im) = Fft.forward (f, real_vec, imag_vec)
 		val i_out as (i_re, i_im) = Fft.inverse (f, f_re, f_im)
 		val fr_out as (fr_re, fr_im) = FftReal.forward (fr, real_vec)
 		val ir_re = FftReal.inverse (fr, fr_re, fr_im)
             in
+                if Fft.size f <> Vector.length real_vec
+                then raise Fail "FFT size does not match vector size"
+                else ();
+
+                if FftReal.size fr <> Vector.length real_vec
+                then raise Fail "Real FFT size does not match vector size"
+                else ();
+                
 		check f_out #output false "forward";
 		check i_out #input true "inverse";
 
