@@ -117,8 +117,11 @@ fun test () =
 		    in
 			Vector.appi
                             (fn (i, x) =>
-				if good x (Vector.sub (vec, i) * factor) then ()
-				else fail vec sort) 
+                                let val y = (Vector.sub (vec, i) * factor)
+                                in
+				    if good x y then ()
+				    else fail vec sort
+                                end)
                             (Vector.fromList lst)
 		    end
 		and check (real, imag) selector scale sort =
@@ -148,7 +151,7 @@ fun test () =
 
 		if #real testcase then
 		    (check fr_out #output false "forward_real";
-		     check_vec ir_re (#1 (#input testcase)) true;
+		     check_vec ir_re (#1 (#input testcase)) true "inverse_real";
 		     pass "inverse_real")
 		else ();
 

@@ -141,16 +141,16 @@ fun inverse (t : t, re_in, im_in) =
                     val s = Vector.sub (#sin_i t, i)
                     val k = i + 1
                     val r0 = Vector.sub (re_in, k)
-                    val r1 = Vector.sub (re_in, hs - k)
                     val i0 = Vector.sub (im_in, k)
-                    val i1 = Vector.sub (im_in, hs - k)
+                    val r1 = Vector.sub (re_in, hs - k)
+                    val i1 = ~(Vector.sub (im_in, hs - k))
                     val tw_r = (r0 - r1) * c - (i0 - i1) * s
                     val tw_i = (r0 - r1) * s + (i0 - i1) * c
                 in
                     update (re_a, k, r0 + r1 + tw_r);
-                    update (re_a, hs - k, r0 + r1 - tw_r);
                     update (im_a, k, i0 + i1 + tw_i);
-                    update (im_a, hs - k, tw_i - i0 + i1)
+                    update (re_a, hs - k, r0 + r1 - tw_r);
+                    update (im_a, hs - k, tw_i - i0 - i1)
                 end);
         Fft.inverse_inplace (#sub t, re_a, im_a);
         Vector.tabulate (sz, fn i =>
