@@ -43,17 +43,17 @@ fun once_real_inv n f =
     end
         
 fun many_times n itr =
-    let val f = Fft.fft n in
+    let val f = Fft.new n in
         List.foldl (op+) 0.0 (List.tabulate (itr, (fn _ => once n f)))
     end
         
 fun many_times_real n itr =
-    let val f = FftReal.fft_real n in
+    let val f = FftReal.new n in
         List.foldl (op+) 0.0 (List.tabulate (itr, (fn _ => once_real n f)))
     end
         
 fun many_times_real_inv n itr =
-    let val f = FftReal.fft_real n in
+    let val f = FftReal.new n in
         List.foldl (op+) 0.0 (List.tabulate (itr, (fn _ => once_real_inv n f)))
     end
 
