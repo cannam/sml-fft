@@ -96,21 +96,21 @@ fun test () =
                                (fn (x, s) => if s = "" then Real.toString x
                                              else (Real.toString x) ^ ", " ^ s)
                                "" vec)
-                and good expected obtained =
+                fun good expected obtained =
                     if Real.abs (obtained - expected) < 1e~11 then true
                     else (print ("Expected " ^ (Real.toString expected) ^
                                  ", obtained " ^ (Real.toString obtained) ^
                                  ", diff " ^ (Real.toString (obtained-expected))
                                  ^ "\n");
                           false)
-                and pass sort =
+                fun pass sort =
                     print ("PASS: " ^ sort ^ " " ^ name ^ "\n")
-                and fail vec sort =
+                fun fail vec sort =
                     (print ("FAIL: " ^ sort ^ " " ^ name ^ "\n");
                      print_vec vec;
                      print "\n";
                      raise Fail ("Failed: " ^ name))
-                and check_vec vec lst scale sort =
+                fun check_vec vec lst scale sort =
                     let val factor =
                             if scale then 1.0 / Real.fromInt (Vector.length vec)
                             else 1.0
@@ -124,11 +124,14 @@ fun test () =
                                 end)
                             (Vector.fromList lst)
                     end
-                and check (real, imag) selector scale sort =
-                    (check_vec real (#1 (selector testcase)) scale sort;
-                     check_vec imag (#2 (selector testcase)) scale sort;
-                     pass sort)
-                and check_arrs (real, imag) =
+                fun check (real, imag) selector scale sort =
+                    let val (tr, ti) = selector testcase
+                    in
+                        check_vec real tr scale sort;
+                        check_vec imag ti scale sort;
+                        pass sort
+                    end
+                fun check_arrs (real, imag) =
                     check (Array.vector real, Array.vector imag)
 
                 val f = Fft.new (Vector.length real_vec)
