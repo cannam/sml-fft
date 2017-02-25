@@ -15,6 +15,7 @@ addons:
     packages:
       - mlton
       - smlnj
+      - libsmlnj-smlnj
       
 before_install:
   - ( cd ../ ; hg clone https://bitbucket.org/cannam/sml-buildscripts )
