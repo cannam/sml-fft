@@ -21,5 +21,6 @@ before_install:
   - ( cd ../ ; hg clone https://bitbucket.org/cannam/sml-buildscripts )
 
 script:
-  - make test && ../sml-buildscripts/smlrun test.mlb
-
+  - make test
+  - ../sml-buildscripts/smlrun test.mlb | tee test.log
+  - ! grep -q "^FAIL" test.log
