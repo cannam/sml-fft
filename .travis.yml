@@ -23,4 +23,4 @@ before_install:
 script:
   - make test
   - ../sml-buildscripts/smlrun test.mlb | tee test.log
-  - ! grep -q "^FAIL" test.log
+  - not grep -q "^FAIL" test.log
