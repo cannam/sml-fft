@@ -68,18 +68,20 @@ fun new size =
 fun size (t : t) =
     2 * Fft.size (#sub t)
         
-fun forward (t : t, re_in) =
+fun forward_ccs (t : t, re_in) =
     let
         open Array
         val sz = Vector.length re_in
-        val _ = if sz = 2 * Vector.length (#cos_f t) then () else
-                raise Fail "Argument length does not match FFTReal size"
+        val _ = if sz = size t then () else
+                raise Fail ("Argument length " ^ (Int.toString sz) ^
+                            " does not match (forward) FFTReal size " ^
+                            (Int.toString (size t)))
         val hs = Int.quot (sz, 2)
         val hhs = Int.quot (hs, 2)
         val re_a = tabulate (hs, (fn i => Vector.sub (re_in, i * 2)))
         val im_a = tabulate (hs, (fn i => Vector.sub (re_in, i * 2 + 1)))
-        val re_out = array (sz, 0.0)
-        val im_out = array (sz, 0.0)
+        val re_out = array (hs + 1, 0.0)
+        val im_out = array (hs + 1, 0.0)
     in
         Fft.forward_inplace (#sub t, re_a, im_a);
         update (re_out, 0, sub (re_a, 0) + sub (im_a, 0));
@@ -99,12 +101,35 @@ fun forward (t : t, re_in) =
                 in
                     update (re_out, k, (r0 + r1 + tw_r) / 2.0);
                     update (re_out, hs - k, (r0 + r1 - tw_r) / 2.0);
-                    update (re_out, sz - k, sub (re_out, k));
-                    update (re_out, hs + k, sub (re_out, hs - k));
                     update (im_out, k, (i0 - i1 + tw_i) / 2.0);
-                    update (im_out, hs - k, (tw_i - i0 + i1) / 2.0);
-                    update (im_out, sz - k, 0.0 - sub (im_out, k));
-                    update (im_out, hs + k, 0.0 - sub (im_out, hs - k))
+                    update (im_out, hs - k, (tw_i - i0 + i1) / 2.0)
+                end);
+        (vector re_out, vector im_out)
+    end
+
+fun forward (t : t, re_in) =
+    (*!!! todo: refactor this and forward_ccs to both call an FftReal.forward_inplace function and unpack *)
+    let
+        open Array
+        val sz = Vector.length re_in
+        val hs = Int.quot (sz, 2)
+        val (re_ccs, im_ccs) = forward_ccs (t, re_in)
+        val re_out = array (sz, 0.0)
+        val im_out = array (sz, 0.0)
+    in
+        for (hs + 1)
+            (fn i =>
+                let
+                    val re = Vector.sub (re_ccs, i)
+                    val im = Vector.sub (im_ccs, i)
+                in
+                    update (re_out, i, re);
+                    update (im_out, i, im);
+                    if i > 0
+                    then 
+                        (update (re_out, sz - i, re);
+                         update (im_out, sz - i, 0.0 - im))
+                    else ()
                 end);
         (vector re_out, vector im_out)
     end
@@ -122,12 +147,15 @@ fun forward_magnitude (t : t, re_in) =
 fun inverse (t : t, re_in, im_in) =
     let
         open Array
-        val sz = Vector.length re_in
-        val _ = if sz = 2 * Vector.length (#cos_i t) then () else
-                raise Fail "Argument length does not match FFTReal size"
-        val _ = if sz = Vector.length im_in then () else
-                raise Fail "Arguments have differing lengths"
+        val insz = Vector.length re_in
+        val sz = size t
         val hs = Int.quot (sz, 2)
+        val _ = if insz >= hs + 1 then () else
+                raise Fail ("Argument length " ^ (Int.toString insz) ^
+                            " too short for (inverse, non-conjugate) FFTReal input size " ^
+                            (Int.toString (hs + 1)))
+        val _ = if insz = Vector.length im_in then () else
+                raise Fail "Arguments to inverse have differing lengths"
         val hhs = Int.quot (hs, 2)
         val re_a = array (hs, 0.0)
         val im_a = array (hs, 0.0)
@@ -141,8 +169,8 @@ fun inverse (t : t, re_in, im_in) =
                     val s = Vector.sub (#sin_i t, i)
                     val k = i + 1
                     val r0 = Vector.sub (re_in, k)
-                    val i0 = Vector.sub (im_in, k)
                     val r1 = Vector.sub (re_in, hs - k)
+                    val i0 = Vector.sub (im_in, k)
                     val i1 = ~(Vector.sub (im_in, hs - k))
                     val tw_r = (r0 - r1) * c - (i0 - i1) * s
                     val tw_i = (r0 - r1) * s + (i0 - i1) * c

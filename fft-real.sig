@@ -39,24 +39,36 @@ signature FFT_REAL = sig
        of two, at least 2). *)
     val new : int -> t
 
-    (* Return the size of the given FFT *)
+    (* Return the size of the given FFT. *)
     val size : t -> int
              
     (* Calculate a forward FFT of real input. Return the result as a
-       pair of separate (real, imaginary) vectors. Result vectors will
-       have the same size as the input vector. *)
+       pair of separate (real, imaginary) vectors. The input vector
+       must have the size given by \ref size. The result vectors will
+       have the same size as the input vector. The transform is
+       unscaled. *)
     val forward : t * real vector -> real vector * real vector
 		
     (* Calculate a forward FFT of real input. Return the result as a
-       magnitude array (discarding phase). The result array will have
-       the same size as the input array. *)
+       pair of separate (real, imaginary) vectors. The input vector
+       must have the size given by \ref size. The conjugate half is
+       not returned, so the output vectors have size \ref size/2 +
+       1. The transform is unscaled. *)
+    val forward_ccs : t * real vector -> real vector * real vector
+	
+    (* Calculate a forward FFT of real input. Return the result as a
+       magnitude vector (discarding phase). The input vector must have
+       the size given by \ref size. The result vector will have the
+       same size as the input vector. *)
     val forward_magnitude : t * real vector -> real vector
 
     (* Calculate an inverse FFT of complex input, returning only the
-       real part of the result and discarding the imaginary
-       part. Result vector will have the same size as the input
-       vectors. The forward and inverse transforms are both unscaled,
-       so this is not a true inverse. *)
+       real part of the result and discarding the imaginary part. The
+       input vectors do not need to supply the (assumed) conjugate
+       half, so only need to supply \ref size/2 + 1 elements (they may
+       be longer than this, but only the first \ref size/2 + 1
+       elements will be used). The result vector has size \ref
+       size. The transform is unscaled. *)
     val inverse : t * real vector * real vector -> real vector
 end
 

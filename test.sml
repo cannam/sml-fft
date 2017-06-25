@@ -97,7 +97,7 @@ fun test () =
                                              else (Real.toString x) ^ ", " ^ s)
                                "" vec)
                 fun good expected obtained =
-                    if Real.abs (obtained - expected) < 1e~11 then true
+                    if Real.abs (obtained - expected) < 1E~11 then true
                     else (print ("Expected " ^ (Real.toString expected) ^
                                  ", obtained " ^ (Real.toString obtained) ^
                                  ", diff " ^ (Real.toString (obtained-expected))
