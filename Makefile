@@ -1,7 +1,7 @@
 
 all:	test
 
-test:	test.mlb fft.sig fft.sml test.sml Makefile
+test:	test.mlb fft.sig fft.sml fft-real.sig fft-real.sml test.sml Makefile
 	mlton test.mlb
 	./test
 

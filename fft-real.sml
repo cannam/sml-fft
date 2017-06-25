@@ -67,8 +67,8 @@ fun new size =
 
 fun size (t : t) =
     2 * Fft.size (#sub t)
-        
-fun forward_ccs (t : t, re_in) =
+
+fun forward_inplace (t : t, re_in, re_out, im_out) =
     let
         open Array
         val sz = Vector.length re_in
@@ -80,8 +80,6 @@ fun forward_ccs (t : t, re_in) =
         val hhs = Int.quot (hs, 2)
         val re_a = tabulate (hs, (fn i => Vector.sub (re_in, i * 2)))
         val im_a = tabulate (hs, (fn i => Vector.sub (re_in, i * 2 + 1)))
-        val re_out = array (hs + 1, 0.0)
-        val im_out = array (hs + 1, 0.0)
     in
         Fft.forward_inplace (#sub t, re_a, im_a);
         update (re_out, 0, sub (re_a, 0) + sub (im_a, 0));
@@ -103,25 +101,35 @@ fun forward_ccs (t : t, re_in) =
                     update (re_out, hs - k, (r0 + r1 - tw_r) / 2.0);
                     update (im_out, k, (i0 - i1 + tw_i) / 2.0);
                     update (im_out, hs - k, (tw_i - i0 + i1) / 2.0)
-                end);
-        (vector re_out, vector im_out)
+                end)
     end
-
-fun forward (t : t, re_in) =
-    (*!!! todo: refactor this and forward_ccs to both call an FftReal.forward_inplace function and unpack *)
+                 
+fun forward_ccs (t : t, re_in) =
     let
         open Array
         val sz = Vector.length re_in
         val hs = Int.quot (sz, 2)
-        val (re_ccs, im_ccs) = forward_ccs (t, re_in)
+        val re_out = array (hs + 1, 0.0)
+        val im_out = array (hs + 1, 0.0)
+    in
+        forward_inplace (t, re_in, re_out, im_out);
+        (vector re_out, vector im_out)
+    end
+
+fun forward (t : t, re_in) =
+    let
+        open Array
+        val sz = Vector.length re_in
+        val hs = Int.quot (sz, 2)
         val re_out = array (sz, 0.0)
         val im_out = array (sz, 0.0)
     in
+        forward_inplace (t, re_in, re_out, im_out);
         for (hs + 1)
             (fn i =>
                 let
-                    val re = Vector.sub (re_ccs, i)
-                    val im = Vector.sub (im_ccs, i)
+                    val re = sub (re_out, i)
+                    val im = sub (im_out, i)
                 in
                     update (re_out, i, re);
                     update (im_out, i, im);
