@@ -1,7 +1,7 @@
 
 A Fast Fourier Transform implementation in Standard ML.
 
-  https://bitbucket.org/cannam/sml-fft
+  https://hg.sr.ht/~cannam/sml-fft
 
 Intended to be reasonably fast rather than beautiful -- it's largely
 imperative using lots of mutable state.
