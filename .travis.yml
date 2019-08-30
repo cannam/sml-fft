@@ -18,7 +18,7 @@ addons:
       - libsmlnj-smlnj
       
 before_install:
-  - ( cd ../ ; hg clone https://bitbucket.org/cannam/sml-buildscripts )
+  - ( cd ../ ; hg clone https://hg.sr.ht/~cannam/sml-buildscripts )
 
 script:
   - make test
