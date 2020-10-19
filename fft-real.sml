@@ -32,16 +32,22 @@
     Software without prior written authorization.
 *)
                                   
-structure FftReal :> FFT_REAL = struct
+structure FftReal :>
+          FFT_REAL
+              where type vec = RealVector.vector = struct
 
+type vec = RealVector.vector
+                               
 type t = {
     sub : Fft.t,
-    cos_f : real vector,
-    sin_f : real vector,
-    cos_i : real vector,
-    sin_i : real vector
+    cos_f : vec,
+    sin_f : vec,
+    cos_i : vec,
+    sin_i : vec
 }
 
+structure VEC = RealVector
+             
 fun for count f =
     let val n = ref 0 in
         while !n < count do (f (!n); n := !n + 1)
@@ -55,10 +61,10 @@ fun new size =
         (* additional factors for real-complex transforms: *)
         val phase = fn i => ~Math.pi * (Real.fromInt (i+1) /
                                         Real.fromInt hs + 0.5)
-        val cos_f = Vector.tabulate (hs, Math.cos o phase)
-        val sin_f = Vector.tabulate (hs, Math.sin o phase)
-        val cos_i = Vector.tabulate (hs, Math.cos o ~ o phase)
-        val sin_i = Vector.tabulate (hs, Math.sin o ~ o phase)
+        val cos_f = VEC.tabulate (hs, Math.cos o phase)
+        val sin_f = VEC.tabulate (hs, Math.sin o phase)
+        val cos_i = VEC.tabulate (hs, Math.cos o ~ o phase)
+        val sin_i = VEC.tabulate (hs, Math.sin o ~ o phase)
     in
         { sub = real_substate,
           cos_f = cos_f, sin_f = sin_f,
@@ -70,16 +76,16 @@ fun size (t : t) =
 
 fun forward_inplace (t : t, re_in, re_out, im_out) =
     let
-        open Array
-        val sz = Vector.length re_in
+        open RealArray
+        val sz = VEC.length re_in
         val _ = if sz = size t then () else
                 raise Fail ("Argument length " ^ (Int.toString sz) ^
                             " does not match (forward) FFTReal size " ^
                             (Int.toString (size t)))
         val hs = Int.quot (sz, 2)
         val hhs = Int.quot (hs, 2)
-        val re_a = tabulate (hs, (fn i => Vector.sub (re_in, i * 2)))
-        val im_a = tabulate (hs, (fn i => Vector.sub (re_in, i * 2 + 1)))
+        val re_a = tabulate (hs, (fn i => VEC.sub (re_in, i * 2)))
+        val im_a = tabulate (hs, (fn i => VEC.sub (re_in, i * 2 + 1)))
     in
         Fft.forward_inplace (#sub t, re_a, im_a);
         update (re_out, 0, sub (re_a, 0) + sub (im_a, 0));
@@ -87,8 +93,8 @@ fun forward_inplace (t : t, re_in, re_out, im_out) =
         for hhs
             (fn i =>
                 let
-                    val c = Vector.sub (#cos_f t, i)
-                    val s = Vector.sub (#sin_f t, i)
+                    val c = VEC.sub (#cos_f t, i)
+                    val s = VEC.sub (#sin_f t, i)
                     val k = i + 1
                     val r0 = sub (re_a, k)
                     val r1 = sub (re_a, hs - k)
@@ -106,8 +112,8 @@ fun forward_inplace (t : t, re_in, re_out, im_out) =
                  
 fun forward_ccs (t : t, re_in) =
     let
-        open Array
-        val sz = Vector.length re_in
+        open RealArray
+        val sz = VEC.length re_in
         val hs = Int.quot (sz, 2)
         val re_out = array (hs + 1, 0.0)
         val im_out = array (hs + 1, 0.0)
@@ -118,8 +124,8 @@ fun forward_ccs (t : t, re_in) =
 
 fun forward (t : t, re_in) =
     let
-        open Array
-        val sz = Vector.length re_in
+        open RealArray
+        val sz = VEC.length re_in
         val hs = Int.quot (sz, 2)
         val re_out = array (sz, 0.0)
         val im_out = array (sz, 0.0)
@@ -144,7 +150,7 @@ fun forward (t : t, re_in) =
 
 fun forward_magnitude (t : t, re_in) =
     let val (re, im) = forward (t, re_in)
-        open Vector
+        open RealVector
         val sz = length re_in
     in
         tabulate (sz, fn i =>
@@ -154,32 +160,32 @@ fun forward_magnitude (t : t, re_in) =
 
 fun inverse (t : t, re_in, im_in) =
     let
-        open Array
-        val insz = Vector.length re_in
+        open RealArray
+        val insz = VEC.length re_in
         val sz = size t
         val hs = Int.quot (sz, 2)
         val _ = if insz >= hs + 1 then () else
                 raise Fail ("Argument length " ^ (Int.toString insz) ^
                             " too short for (inverse, non-conjugate) FFTReal input size " ^
                             (Int.toString (hs + 1)))
-        val _ = if insz = Vector.length im_in then () else
+        val _ = if insz = VEC.length im_in then () else
                 raise Fail "Arguments to inverse have differing lengths"
         val hhs = Int.quot (hs, 2)
         val re_a = array (hs, 0.0)
         val im_a = array (hs, 0.0)
     in
-        update (re_a, 0, Vector.sub (re_in, 0) + Vector.sub (re_in, hs));
-        update (im_a, 0, Vector.sub (re_in, 0) - Vector.sub (re_in, hs));
+        update (re_a, 0, VEC.sub (re_in, 0) + VEC.sub (re_in, hs));
+        update (im_a, 0, VEC.sub (re_in, 0) - VEC.sub (re_in, hs));
         for hhs 
             (fn i =>
                 let
-                    val c = Vector.sub (#cos_i t, i)
-                    val s = Vector.sub (#sin_i t, i)
+                    val c = VEC.sub (#cos_i t, i)
+                    val s = VEC.sub (#sin_i t, i)
                     val k = i + 1
-                    val r0 = Vector.sub (re_in, k)
-                    val r1 = Vector.sub (re_in, hs - k)
-                    val i0 = Vector.sub (im_in, k)
-                    val i1 = ~(Vector.sub (im_in, hs - k))
+                    val r0 = VEC.sub (re_in, k)
+                    val r1 = VEC.sub (re_in, hs - k)
+                    val i0 = VEC.sub (im_in, k)
+                    val i1 = ~(VEC.sub (im_in, hs - k))
                     val tw_r = (r0 - r1) * c - (i0 - i1) * s
                     val tw_i = (r0 - r1) * s + (i0 - i1) * c
                 in
@@ -189,13 +195,13 @@ fun inverse (t : t, re_in, im_in) =
                     update (im_a, hs - k, tw_i - i0 - i1)
                 end);
         Fft.inverse_inplace (#sub t, re_a, im_a);
-        Vector.tabulate (sz, fn i =>
-                                let val j = Int.quot (i, 2)
-                                    val k = Int.mod (i, 2)
-                                in
-                                    if k = 0 then sub (re_a, j)
-                                    else sub (im_a, j)
-                                end)
+        VEC.tabulate (sz, fn i =>
+                             let val j = Int.quot (i, 2)
+                                 val k = Int.mod (i, 2)
+                             in
+                                 if k = 0 then sub (re_a, j)
+                                 else sub (im_a, j)
+                             end)
     end        
 
 end

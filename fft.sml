@@ -33,14 +33,22 @@
     Software without prior written authorization.
 *)
                  
-structure Fft :> FFT = struct
+structure Fft :>
+          FFT
+              where type vec = RealVector.vector
+              where type arr = RealArray.array = struct
+
+type vec = RealVector.vector
+type arr = RealArray.array
 
 type t = {
-    cos : real vector,
-    sin : real vector,
+    cos : vec,
+    sin : vec,
     levels : int
 }
-
+             
+structure VEC = RealVector
+             
 fun for count f =
     let val n = ref 0 in
         while !n < count do (f (!n); n := !n + 1)
@@ -55,8 +63,8 @@ fun power_of_two 1 = 0
 fun new size =
     let
         val phase = fn i => 2.0 * Math.pi * Real.fromInt(i) / Real.fromInt(size)
-        val cos = Vector.tabulate (size, Math.cos o phase)
-        val sin = Vector.tabulate (size, Math.sin o phase)
+        val cos = VEC.tabulate (size, Math.cos o phase)
+        val sin = VEC.tabulate (size, Math.sin o phase)
         val levels = power_of_two size
     in
         { cos = cos, sin = sin, levels = levels }
@@ -71,11 +79,11 @@ fun size (fft : t) =
 fun forward_inplace (t : t, real, imag) =
 
     let
-        open Array
+        open RealArray
 
         val size = length real
 
-        val _ = if size = Vector.length (#cos t) then () else
+        val _ = if size = VEC.length (#cos t) then () else
                 raise Fail "Argument length does not match FFT size"
         val _ = if size = length imag then () else
                 raise Fail "Arguments have differing lengths"
@@ -120,8 +128,8 @@ fun forward_inplace (t : t, real, imag) =
                                 let val i = i' * scale
                                     val j = h + i
                                     val k = j + half
-                                    val c = Vector.sub (#cos t, h * step)
-                                    val s = Vector.sub (#sin t, h * step)
+                                    val c = VEC.sub (#cos t, h * step)
+                                    val s = VEC.sub (#sin t, h * step)
                                     val re = sub (real, k) * c + sub (imag, k) * s
                                     val im = sub (imag, k) * c - sub (real, k) * s
                                 in
@@ -142,9 +150,9 @@ fun inverse_inplace (t : t, real, imag) =
     forward_inplace (t, imag, real)
 
 fun forward (t, real, imag) =
-    let open Array
-        val re_a = array (Vector.length real, 0.0)
-        val im_a = array (Vector.length imag, 0.0)
+    let open RealArray
+        val re_a = array (VEC.length real, 0.0)
+        val im_a = array (VEC.length imag, 0.0)
     in
         copyVec { src = real, dst = re_a, di = 0 };
         copyVec { src = imag, dst = im_a, di = 0 };
@@ -153,9 +161,9 @@ fun forward (t, real, imag) =
     end
     
 fun inverse (t, real, imag) =
-    let open Array
-        val re_a = array (Vector.length real, 0.0)
-        val im_a = array (Vector.length imag, 0.0)
+    let open RealArray
+        val re_a = array (VEC.length real, 0.0)
+        val im_a = array (VEC.length imag, 0.0)
     in
         copyVec { src = real, dst = re_a, di = 0 };
         copyVec { src = imag, dst = im_a, di = 0 };
