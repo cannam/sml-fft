@@ -99,13 +99,13 @@ fun test () =
     app (fn testcase =>
             let
                 val name = #name testcase
-                val real_arr = Array.fromList (#1 (#input testcase))
-                val imag_arr = Array.fromList (#2 (#input testcase))
-                val real_vec = Array.vector real_arr
-                val imag_vec = Array.vector imag_arr
+                val real_arr = RealArray.fromList (#1 (#input testcase))
+                val imag_arr = RealArray.fromList (#2 (#input testcase))
+                val real_vec = RealArray.vector real_arr
+                val imag_vec = RealArray.vector imag_arr
 
                 fun print_vec vec =
-                    print (Vector.foldr
+                    print (RealVector.foldr
                                (fn (x, s) => if s = "" then Real.toString x
                                              else (Real.toString x) ^ ", " ^ s)
                                "" vec)
@@ -125,17 +125,18 @@ fun test () =
                      raise Fail ("Failed: " ^ name))
                 fun check_vec vec lst scale sort =
                     let val factor =
-                            if scale then 1.0 / Real.fromInt (Vector.length vec)
+                            if scale
+                            then 1.0 / Real.fromInt (RealVector.length vec)
                             else 1.0
                     in
-                        Vector.appi
+                        RealVector.appi
                             (fn (i, x) =>
-                                let val y = (Vector.sub (vec, i) * factor)
+                                let val y = (RealVector.sub (vec, i) * factor)
                                 in
                                     if good x y then ()
                                     else fail vec sort
                                 end)
-                            (Vector.fromList lst)
+                            (RealVector.fromList lst)
                     end
                 fun check (real, imag) selector scale sort =
                     let val (tr, ti) = selector testcase
@@ -145,10 +146,10 @@ fun test () =
                         pass sort
                     end
                 fun check_arrs (real, imag) =
-                    check (Array.vector real, Array.vector imag)
+                    check (RealArray.vector real, RealArray.vector imag)
 
-                val f = Fft.new (Vector.length real_vec)
-                val fr = FftReal.new (Vector.length real_vec)
+                val f = Fft.new (RealVector.length real_vec)
+                val fr = FftReal.new (RealVector.length real_vec)
                 val f_out as (f_re, f_im) = Fft.forward (f, real_vec, imag_vec)
                 val i_out as (i_re, i_im) = Fft.inverse (f, f_re, f_im)
                 val fr_out as (fr_re, fr_im) = FftReal.forward (fr, real_vec)
@@ -156,11 +157,11 @@ fun test () =
                                                                        real_vec)
                 val ir_re = FftReal.inverse (fr, fr_re, fr_im)
             in
-                if Fft.size f <> Vector.length real_vec
+                if Fft.size f <> RealVector.length real_vec
                 then raise Fail "FFT size does not match vector size"
                 else ();
 
-                if FftReal.size fr <> Vector.length real_vec
+                if FftReal.size fr <> RealVector.length real_vec
                 then raise Fail "Real FFT size does not match vector size"
                 else ();
                 
