@@ -94,7 +94,7 @@ fun forward_inplace (t : t, re_in, re_out, im_out) =
             (fn i =>
                 let
                     val c = VEC.sub (#cos_f t, i)
-                    val s = VEC.sub (#sin_f t, i)
+                    val s = ~ VEC.sub (#sin_f t, i)
                     val k = i + 1
                     val r0 = sub (re_a, k)
                     val r1 = sub (re_a, hs - k)
